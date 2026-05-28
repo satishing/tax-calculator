@@ -1,0 +1,1918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TDS / Spot-Tax Calculator · FY 2025-26 · Income-Tax Act 2025</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&family=Manrope:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============ DESIGN TOKENS ============ */
+:root {
+  --bg:           #FAF7F1;
+  --bg-alt:       #F2EDE2;
+  --bg-card:      #FDFBF6;
+  --ink:          #1A1F2E;
+  --ink-soft:     #4A4E5B;
+  --ink-light:    #8A8E9B;
+  --rule:         #D8D2C4;
+  --rule-soft:    #E8E3D5;
+
+  --primary:      #1E3A5F;
+  --primary-soft: #E3ECF5;
+  --primary-bg:   #F0F4FA;
+
+  --input:        #1E3A5F;
+  --input-bg:     #E3ECF5;
+  --deduct:       #9A3F2A;
+  --deduct-bg:    #F5E6DE;
+  --output:       #2A5944;
+  --output-bg:    #DCE9E1;
+  --warn:         #8C6A1F;
+  --warn-bg:      #F5ECD5;
+  --disabled:     #ADA89B;
+  --disabled-bg:  #EFEAE0;
+
+  --hl-yellow:    #FFF2CC;
+
+  --shadow-1: 0 1px 2px rgba(26,31,46,0.05), 0 1px 1px rgba(26,31,46,0.04);
+  --shadow-2: 0 4px 14px rgba(26,31,46,0.08), 0 2px 4px rgba(26,31,46,0.04);
+  --shadow-3: 0 12px 32px rgba(26,31,46,0.12);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: 'Manrope', system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--ink);
+  background: var(--bg);
+  background-image:
+    radial-gradient(at 0% 0%, rgba(30, 58, 95, 0.025) 0%, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(154, 63, 42, 0.02) 0%, transparent 50%);
+  background-attachment: fixed;
+  min-height: 100vh;
+  font-feature-settings: 'kern', 'liga', 'calt';
+}
+
+/* Subtle paper texture */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.1, 0 0 0 0 0.1, 0 0 0 0 0.15, 0 0 0 0.04 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 1;
+  mix-blend-mode: multiply;
+}
+
+body > * { position: relative; z-index: 2; }
+
+.num {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+  font-size: 0.92em;
+  letter-spacing: -0.01em;
+}
+
+.serif {
+  font-family: 'Fraunces', Georgia, serif;
+  font-feature-settings: 'ss01', 'ss03', 'cv11';
+}
+
+/* ============ HEADER ============ */
+header.masthead {
+  padding: 4rem 3rem 2.5rem;
+  border-bottom: 1px solid var(--rule);
+  position: relative;
+}
+
+.masthead::after {
+  content: '';
+  position: absolute;
+  left: 3rem;
+  right: 3rem;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--ink) 0%, var(--ink) 8%, transparent 8.5%);
+}
+
+.kicker {
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--deduct);
+  font-weight: 600;
+  margin-bottom: 0.8rem;
+  display: inline-block;
+  border-bottom: 1px solid var(--deduct);
+  padding-bottom: 4px;
+}
+
+h1.title {
+  font-family: 'Fraunces', serif;
+  font-size: clamp(2.6rem, 6vw, 4.4rem);
+  font-weight: 400;
+  font-style: italic;
+  line-height: 0.95;
+  color: var(--ink);
+  letter-spacing: -0.03em;
+  margin-bottom: 0.5rem;
+  font-feature-settings: 'ss01', 'ss03';
+}
+
+h1.title em {
+  font-style: normal;
+  color: var(--primary);
+}
+
+.dek {
+  font-family: 'Manrope', sans-serif;
+  font-size: 1.05rem;
+  color: var(--ink-soft);
+  font-weight: 400;
+  max-width: 60ch;
+  margin-top: 1rem;
+}
+
+.dek strong { color: var(--ink); font-weight: 600; }
+
+.byline {
+  margin-top: 2rem;
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+  color: var(--ink-light);
+  letter-spacing: 0.04em;
+}
+.byline > span {
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+.byline strong {
+  color: var(--ink);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+}
+
+/* ============ TABS ============ */
+nav.tabs {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--bg);
+  border-bottom: 1px solid var(--rule);
+  padding: 0 3rem;
+  display: flex;
+  gap: 0;
+  backdrop-filter: blur(8px);
+  background: rgba(250, 247, 241, 0.92);
+}
+
+nav.tabs button {
+  background: transparent;
+  border: none;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-light);
+  padding: 1.1rem 1.6rem;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.18s ease;
+  position: relative;
+}
+
+nav.tabs button:hover { color: var(--ink); }
+nav.tabs button.active {
+  color: var(--ink);
+  border-bottom-color: var(--deduct);
+}
+nav.tabs button .num-badge {
+  display: inline-block;
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: 0.75em;
+  color: var(--ink-light);
+  margin-right: 0.4em;
+}
+
+/* ============ MAIN ============ */
+main {
+  padding: 3rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.tab-content { display: none; animation: fadeIn 0.4s ease; }
+.tab-content.active { display: block; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ============ OVERVIEW TAB ============ */
+.overview-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 4rem;
+  margin-top: 2rem;
+}
+@media (max-width: 900px) { .overview-grid { grid-template-columns: 1fr; gap: 2rem; } }
+
+.lede {
+  font-family: 'Fraunces', serif;
+  font-size: 1.6rem;
+  line-height: 1.4;
+  font-weight: 400;
+  color: var(--ink);
+  margin-bottom: 2rem;
+  max-width: 60ch;
+}
+.lede strong { color: var(--deduct); font-style: italic; }
+
+.what-it-does {
+  list-style: none;
+  counter-reset: item;
+  padding: 0;
+}
+.what-it-does li {
+  counter-increment: item;
+  padding: 1.2rem 0;
+  border-top: 1px solid var(--rule-soft);
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 1.5rem;
+  align-items: baseline;
+}
+.what-it-does li:last-child { border-bottom: 1px solid var(--rule-soft); }
+.what-it-does li::before {
+  content: counter(item, decimal-leading-zero);
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: 1.8rem;
+  color: var(--deduct);
+  font-weight: 300;
+}
+
+.sidebar-card {
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  padding: 2rem;
+  position: sticky;
+  top: 5rem;
+}
+
+.sidebar-card h3 {
+  font-family: 'Fraunces', serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--deduct);
+  margin-bottom: 1.2rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.legend-row {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 0.8rem;
+  padding: 0.55rem 0;
+  font-size: 0.85rem;
+  align-items: center;
+  border-bottom: 1px dashed var(--rule-soft);
+}
+.legend-row:last-child { border: none; }
+.legend-row span:first-child {
+  font-weight: 600;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  text-align: center;
+  border-radius: 2px;
+}
+.legend-blue   { background: var(--input-bg);    color: var(--input); }
+.legend-red    { background: var(--deduct-bg);   color: var(--deduct); }
+.legend-green  { background: var(--output-bg);   color: var(--output); }
+.legend-black  { background: transparent;        color: var(--ink); border: 1px solid var(--rule); }
+.legend-grey   { background: var(--disabled-bg); color: var(--disabled); font-style: italic; }
+.legend-yellow { background: var(--hl-yellow);   color: var(--warn); }
+
+.rules-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+.rules-table td {
+  padding: 0.9rem 0;
+  vertical-align: top;
+  border-top: 1px solid var(--rule-soft);
+  font-size: 0.92rem;
+}
+.rules-table td:first-child {
+  width: 220px;
+  font-weight: 600;
+  color: var(--primary);
+  padding-right: 1.5rem;
+}
+.rules-table td:last-child { color: var(--ink-soft); line-height: 1.6; }
+
+/* ============ CALCULATOR TAB ============ */
+.regime-toggle {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem 0 2.5rem;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 2.5rem;
+}
+
+.regime-toggle .label {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: 1.1rem;
+  color: var(--ink-soft);
+}
+
+.toggle-group {
+  display: inline-flex;
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  padding: 4px;
+  border-radius: 999px;
+}
+
+.toggle-group input[type="radio"] { display: none; }
+
+.toggle-group label {
+  padding: 0.55rem 1.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 999px;
+  transition: all 0.2s ease;
+  color: var(--ink-light);
+}
+
+.toggle-group input[type="radio"]:checked + label {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+.regime-badge {
+  margin-left: auto;
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--ink-light);
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+}
+
+/* ----- Two-column calc layout ----- */
+.calc-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 3rem;
+}
+@media (max-width: 1100px) {
+  .calc-grid { grid-template-columns: 1fr; gap: 3rem; }
+}
+
+.calc-column {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Section blocks */
+.section {
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  border-top: 3px solid var(--primary);
+}
+
+.section-deduct { border-top-color: var(--deduct); }
+.section-output { border-top-color: var(--output); }
+
+.section-head {
+  padding: 1.1rem 1.5rem 0.9rem;
+  border-bottom: 1px solid var(--rule-soft);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.section-letter {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: 1.3rem;
+  color: var(--deduct);
+  font-weight: 400;
+}
+.section-title {
+  font-family: 'Fraunces', serif;
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  flex: 1;
+}
+.section-sub {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-light);
+  font-weight: 500;
+}
+
+.section-body { padding: 0.4rem 1.5rem 1.2rem; }
+
+.subsection-head {
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--primary);
+  padding: 1rem 0 0.5rem;
+  border-bottom: 1px solid var(--rule-soft);
+  margin-bottom: 0.4rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.subsection-head .sec-num {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 0.85rem;
+  color: var(--ink-light);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* Input rows */
+.input-row {
+  display: grid;
+  grid-template-columns: 1fr 130px;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  align-items: center;
+  border-bottom: 1px dotted var(--rule-soft);
+}
+.input-row:last-child { border-bottom: none; }
+
+.input-label {
+  font-size: 0.92rem;
+  color: var(--ink);
+  line-height: 1.4;
+}
+.input-row .input-note {
+  font-size: 0.74rem;
+  color: var(--ink-light);
+  margin-top: 2px;
+  font-style: italic;
+}
+
+.amt-input {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.92rem;
+  text-align: right;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--rule);
+  background: var(--input-bg);
+  color: var(--input);
+  font-weight: 600;
+  width: 100%;
+  border-radius: 2px;
+  transition: all 0.15s ease;
+}
+.amt-input:hover { border-color: var(--input); }
+.amt-input:focus {
+  outline: none;
+  border-color: var(--input);
+  box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.15);
+}
+
+.amt-input.deduct { background: var(--deduct-bg); color: var(--deduct); border-color: rgba(154, 63, 42, 0.2); }
+.amt-input.deduct:hover { border-color: var(--deduct); }
+.amt-input.deduct:focus { border-color: var(--deduct); box-shadow: 0 0 0 3px rgba(154, 63, 42, 0.12); }
+
+.amt-input.auto {
+  background: var(--bg-alt);
+  color: var(--ink-soft);
+  border-color: var(--rule);
+  font-weight: 500;
+  cursor: not-allowed;
+}
+
+.amt-input.disabled-regime {
+  background: var(--disabled-bg);
+  color: var(--disabled);
+  border-color: var(--rule-soft);
+  font-style: italic;
+}
+
+.input-row.disabled-row .input-label {
+  color: var(--disabled);
+  font-style: italic;
+}
+
+.input-row.subtotal {
+  background: var(--bg-alt);
+  margin: 0.5rem -1.5rem 0;
+  padding: 0.6rem 1.5rem;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+.input-row.subtotal .input-label {
+  font-weight: 600;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  color: var(--primary);
+  text-transform: uppercase;
+}
+.input-row.subtotal .num-display {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-align: right;
+  color: var(--primary);
+}
+
+/* ============ OUTPUT PANEL ============ */
+.headline-output {
+  background: var(--ink);
+  color: var(--bg);
+  padding: 2.5rem 2rem;
+  border-top: 3px solid var(--deduct);
+  position: relative;
+  overflow: hidden;
+}
+
+.headline-output::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 60%;
+  height: 200%;
+  background: radial-gradient(ellipse, rgba(154, 63, 42, 0.18) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.headline-output > * { position: relative; z-index: 2; }
+
+.headline-output .kicker {
+  color: rgba(255, 255, 255, 0.5);
+  border-color: rgba(255, 255, 255, 0.25);
+  font-size: 0.68rem;
+  margin-bottom: 1.2rem;
+}
+
+.spot-amount {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: clamp(3rem, 7vw, 5rem);
+  font-weight: 300;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  margin-bottom: 0.4rem;
+  font-feature-settings: 'ss01', 'cv11', 'tnum';
+}
+.spot-amount .rupee {
+  font-family: 'JetBrains Mono', monospace;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 0.5em;
+  vertical-align: 0.45em;
+  margin-right: 0.05em;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.spot-meta {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem 2rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.spot-meta .label {
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+.spot-meta .value {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: #fff;
+}
+.spot-meta .value.pct {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.5rem;
+}
+
+/* Step-by-step table */
+.compute-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.compute-table th {
+  text-align: right;
+  padding: 0.7rem 0.6rem;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-light);
+  border-bottom: 1px solid var(--rule);
+  background: var(--bg-alt);
+}
+.compute-table th:first-child { text-align: left; padding-left: 1rem; }
+
+.compute-table td {
+  padding: 0.5rem 0.6rem;
+  border-bottom: 1px dotted var(--rule-soft);
+  vertical-align: middle;
+}
+.compute-table td:first-child {
+  padding-left: 1rem;
+  color: var(--ink);
+}
+.compute-table td:not(:first-child) {
+  text-align: right;
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+}
+
+.compute-table .indent { padding-left: 2.5rem !important; color: var(--ink-soft); font-size: 0.85rem; }
+.compute-table .strong-row td {
+  font-weight: 700;
+  background: var(--bg-alt);
+  border-bottom: 1px solid var(--rule);
+  border-top: 1px solid var(--rule);
+}
+.compute-table .total-row td {
+  font-weight: 800;
+  background: var(--output-bg);
+  color: var(--output);
+  border-bottom: 2px solid var(--output);
+  border-top: 2px solid var(--output);
+  padding-top: 0.7rem;
+  padding-bottom: 0.7rem;
+}
+.compute-table .total-row td:first-child {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: 0.95rem;
+}
+
+.compute-table .spot-col {
+  color: var(--deduct);
+  font-weight: 600;
+}
+
+/* Key outputs grid */
+.key-outputs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0;
+  border-top: 1px solid var(--rule);
+}
+.key-outputs .ko {
+  padding: 1rem 1.2rem;
+  border-bottom: 1px solid var(--rule-soft);
+  border-right: 1px solid var(--rule-soft);
+}
+.key-outputs .ko:nth-child(2n) { border-right: none; }
+.key-outputs .ko:nth-last-child(-n+2) { border-bottom: none; }
+
+.ko .label {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-light);
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+.ko .value {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.ko .value.accent { color: var(--deduct); }
+.ko .value.pct { font-family: 'Fraunces', serif; font-style: italic; font-weight: 500; font-size: 1.3rem; }
+
+.tip-box {
+  background: var(--hl-yellow);
+  border-left: 3px solid var(--warn);
+  padding: 1rem 1.3rem;
+  margin-top: 1rem;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+.tip-box strong { color: var(--warn); font-family: 'Fraunces', serif; font-style: italic; }
+
+/* ============ SCENARIOS TAB ============ */
+.scenario-table-wrap {
+  overflow-x: auto;
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  border-top: 3px solid var(--deduct);
+  margin-top: 2rem;
+}
+
+.scenario-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  min-width: 1100px;
+}
+
+.scenario-table th {
+  background: var(--ink);
+  color: var(--bg);
+  padding: 0.9rem 0.7rem;
+  text-align: right;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  vertical-align: bottom;
+  line-height: 1.3;
+}
+.scenario-table th:first-child { text-align: center; }
+.scenario-table th:nth-child(2),
+.scenario-table th:nth-child(3) { text-align: right; }
+
+.scenario-table td {
+  padding: 0.7rem 0.7rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.scenario-table td:first-child {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  text-align: center;
+  color: var(--ink-light);
+}
+.scenario-table tr:hover td { background: var(--bg-alt); }
+
+.scenario-table .spot-cell {
+  background: var(--output-bg);
+  color: var(--output);
+  font-weight: 700;
+}
+.scenario-table .rate-cell {
+  background: var(--output-bg);
+  color: var(--output);
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-weight: 500;
+}
+.scenario-table .tier-cell {
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-align: center;
+}
+.scenario-table .input-cell {
+  background: var(--input-bg);
+  color: var(--input);
+  font-weight: 600;
+}
+
+/* Editable cell */
+.scenario-table input.cell-input {
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid transparent;
+  text-align: right;
+  width: 100%;
+  padding: 2px 4px;
+  border-radius: 2px;
+}
+.scenario-table input.cell-input:hover { border-color: var(--input); }
+.scenario-table input.cell-input:focus {
+  outline: none;
+  border-color: var(--input);
+  background: #fff;
+}
+
+/* ============ REFERENCE TAB ============ */
+.ref-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2.5rem;
+  margin-top: 2rem;
+}
+@media (max-width: 900px) { .ref-grid { grid-template-columns: 1fr; } }
+
+.ref-card {
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  border-top: 3px solid var(--primary);
+  padding: 1.8rem 1.8rem 1.5rem;
+}
+.ref-card.deduct-card { border-top-color: var(--deduct); grid-column: 1 / -1; }
+
+.ref-card h3 {
+  font-family: 'Fraunces', serif;
+  font-weight: 500;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  color: var(--ink);
+}
+.ref-card h3 .sub {
+  font-size: 0.85rem;
+  color: var(--ink-light);
+  font-weight: 400;
+  font-style: italic;
+}
+
+.ref-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+}
+.ref-table th, .ref-table td {
+  padding: 0.55rem 0.4rem;
+  border-bottom: 1px solid var(--rule-soft);
+  font-size: 0.88rem;
+  text-align: left;
+}
+.ref-table th {
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+  color: var(--ink-light);
+  border-bottom: 1px solid var(--rule);
+}
+.ref-table td.num {
+  text-align: right;
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.ref-table td.center { text-align: center; }
+
+.ref-table .new-cell { color: var(--primary); font-weight: 600; }
+.ref-table .old-cell { color: var(--deduct); font-weight: 600; }
+.ref-table .na { color: var(--disabled); font-style: italic; }
+
+.kpi-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.kpi {
+  background: var(--bg-alt);
+  padding: 1rem 1.2rem;
+  border-left: 3px solid var(--primary);
+}
+.kpi.deduct { border-left-color: var(--deduct); }
+.kpi .l {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-light);
+  font-weight: 600;
+}
+.kpi .v {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: 1.6rem;
+  color: var(--ink);
+  margin-top: 0.2rem;
+  font-feature-settings: 'tnum';
+}
+
+/* ============ FOOTER ============ */
+footer {
+  margin-top: 5rem;
+  padding: 3rem;
+  border-top: 1px solid var(--rule);
+  font-size: 0.82rem;
+  color: var(--ink-light);
+  line-height: 1.6;
+}
+footer .disclaimer {
+  max-width: 75ch;
+  margin: 0 auto;
+  text-align: center;
+}
+footer strong { color: var(--ink); font-family: 'Fraunces', serif; font-style: italic; }
+
+/* ============ PRINT ============ */
+@media print {
+  body { background: white; }
+  body::before { display: none; }
+  nav.tabs { display: none; }
+  .tab-content { display: block !important; page-break-after: always; }
+  .regime-toggle { page-break-after: avoid; }
+  .section, .ref-card { break-inside: avoid; }
+}
+
+@media (max-width: 700px) {
+  header.masthead { padding: 2.5rem 1.2rem 1.5rem; }
+  nav.tabs { padding: 0 1.2rem; overflow-x: auto; }
+  nav.tabs button { padding: 1rem 0.8rem; font-size: 0.72rem; }
+  main { padding: 1.5rem 1.2rem; }
+  .input-row { grid-template-columns: 1fr 110px; }
+  .section-body { padding: 0.4rem 1rem 1.2rem; }
+  .section-head { padding: 1rem 1rem 0.8rem; }
+  .spot-amount { font-size: 2.5rem; }
+  .key-outputs { grid-template-columns: 1fr; }
+  .key-outputs .ko { border-right: none; }
+}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <span class="kicker">Income-Tax Act, 2025 · Finance Act 2025 Slabs</span>
+  <h1 class="title">TDS / <em>Spot-Tax</em><br>Calculator</h1>
+  <p class="dek">
+    Compute the incremental tax an employer must deduct when paying a one-time
+    <strong>bonus or additional income</strong> — the so-called "spot tax" — under both the New
+    and Old regimes for Financial Year <strong>2025-26</strong>.
+  </p>
+  <div class="byline">
+    <span><strong>FY</strong> 2025-26</span>
+    <span><strong>AY</strong> 2026-27</span>
+    <span><strong>Default</strong> New Regime u/s 202 (115BAC)</span>
+    <span><strong>Cess</strong> 4%</span>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button data-tab="overview"><span class="num-badge">i.</span>Overview</button>
+  <button data-tab="calculator" class="active"><span class="num-badge">ii.</span>Calculator</button>
+  <button data-tab="scenarios"><span class="num-badge">iii.</span>Scenarios</button>
+  <button data-tab="reference"><span class="num-badge">iv.</span>Reference</button>
+</nav>
+
+<main>
+
+<!-- ============================ OVERVIEW ============================ -->
+<section id="overview" class="tab-content">
+  <div class="overview-grid">
+    <div>
+      <p class="lede">
+        A workbench for the <strong>tax practitioner</strong> — to project the exact tax
+        an employer should deduct at source on a bonus, before and after the
+        payout, with the surcharge cliff and 87A marginal relief modelled per the
+        Income-Tax Act 2025.
+      </p>
+
+      <h3 style="font-family:'Fraunces',serif; font-size:0.9rem; font-weight:500; letter-spacing:0.18em; text-transform:uppercase; color:var(--deduct); margin-bottom:0.5rem;">What this tool does</h3>
+      <ol class="what-it-does">
+        <li><span>Computes annual TDS <strong>without</strong> the bonus and <strong>with</strong> the bonus across full salary, deductions, surcharge & cess.</span></li>
+        <li><span>Isolates the <strong>incremental TDS</strong> — what your employer withholds in the month the bonus lands.</span></li>
+        <li><span>Shows the <strong>effective tax rate</strong> on the bonus — exposing surcharge cliffs where the marginal rate can spike past 60%.</span></li>
+        <li><span>Models the full deduction tree per IT Act 2025 — Section 11 (formerly 10), Chapter VIII (formerly VI-A) and the new section numbering for 80C → 123, 80D → 126, etc.</span></li>
+        <li><span>Compares <strong>New vs Old</strong> regime side-by-side; either is selectable in the calculator.</span></li>
+        <li><span>Provides 12 pre-computed bracket × bonus scenarios (₹20 L / ₹60 L / ₹1 Cr × varying bonuses).</span></li>
+      </ol>
+
+      <h3 style="font-family:'Fraunces',serif; font-size:0.9rem; font-weight:500; letter-spacing:0.18em; text-transform:uppercase; color:var(--deduct); margin-top:2.5rem; margin-bottom:1rem;">Key Tax Rules Applied</h3>
+      <table class="rules-table">
+        <tr><td>Statute</td><td>Income-Tax Act, 2025 (replaces 1961 Act w.e.f. 01-Apr-2026). FY 25-26 slab rates per Finance Act 2025.</td></tr>
+        <tr><td>Default regime</td><td>New Regime u/s 202 (formerly 115BAC). Old regime is optional.</td></tr>
+        <tr><td>Section renumbering</td><td>Sec 10 → 11; Chapter VI-A → VIII; 80C → 123; 80CCD → 124; 80D → 126; 80E → 132; 80G → 133; 80DD → 128; 80DDB → 129; 80U → 130; 80GGC → 135.</td></tr>
+        <tr><td>Standard Deduction</td><td>₹75,000 (New Regime salaried) / ₹50,000 (Old Regime salaried).</td></tr>
+        <tr><td>87A Rebate (New)</td><td>Up to ₹60,000 — full waiver if Total Income ≤ ₹12,00,000. Marginal relief above 12 L: tax payable capped at (TI − ₹12 L).</td></tr>
+        <tr><td>87A Rebate (Old)</td><td>Up to ₹12,500 — full waiver if Total Income ≤ ₹5,00,000.</td></tr>
+        <tr><td>Surcharge</td><td>10% (50 L – 1 Cr), 15% (1 Cr – 2 Cr), 25% (above 2 Cr — capped under New). Marginal relief at every tier.</td></tr>
+        <tr><td>Cess</td><td>Health & Education Cess @ 4% on (Income Tax + Surcharge).</td></tr>
+        <tr><td>Spot TDS</td><td>= TDS (with bonus) − TDS (without bonus). The employer typically deducts this from the bonus payout itself.</td></tr>
+      </table>
+    </div>
+
+    <aside class="sidebar-card">
+      <h3>Color Coding</h3>
+      <div class="legend-row"><span class="legend-blue">Blue</span><span>Base earnings — your inputs</span></div>
+      <div class="legend-row"><span class="legend-red">Red</span><span>Deductions & allowances — your inputs</span></div>
+      <div class="legend-row"><span class="legend-green">Green</span><span>Key outputs (TDS, spot tax, rates)</span></div>
+      <div class="legend-row"><span class="legend-black">Black</span><span>Auto-calculated values</span></div>
+      <div class="legend-row"><span class="legend-grey">Grey italic</span><span>Disallowed under selected regime</span></div>
+      <div class="legend-row"><span class="legend-yellow">Yellow</span><span>Tips & caveats</span></div>
+
+      <h3 style="margin-top:2rem;">Disclaimer</h3>
+      <p style="font-size:0.82rem; line-height:1.55; color:var(--ink-soft);">
+        Planning aid for resident individuals under 60. Does <em>not</em> model capital-gains special-rate income,
+        agricultural income, lottery winnings, or multiple-employer scenarios. Apply judgment for HRA exemption
+        (depends on basic-salary breakdown). Verify with a CA for high-value transactions.
+      </p>
+    </aside>
+  </div>
+</section>
+
+<!-- ============================ CALCULATOR ============================ -->
+<section id="calculator" class="tab-content active">
+
+  <div class="regime-toggle">
+    <span class="label">Regime</span>
+    <div class="toggle-group">
+      <input type="radio" name="regime" id="regime-new" value="new" checked>
+      <label for="regime-new">New (default)</label>
+      <input type="radio" name="regime" id="regime-old" value="old">
+      <label for="regime-old">Old</label>
+    </div>
+    <span class="regime-badge" id="regime-badge">FY 2025-26 · NEW REGIME</span>
+  </div>
+
+  <div class="calc-grid">
+
+    <!-- ===== INPUTS COLUMN ===== -->
+    <div class="calc-column">
+
+      <!-- Section A: Base Earnings -->
+      <div class="section">
+        <div class="section-head">
+          <span class="section-letter">A.</span>
+          <span class="section-title">Base Earnings & Income</span>
+          <span class="section-sub">Inputs</span>
+        </div>
+        <div class="section-body">
+          <div class="input-row">
+            <div class="input-label">Annual CTC / Gross Salary<div class="input-note">Includes all components</div></div>
+            <input type="text" class="amt-input" data-input="ctc" value="2000000">
+          </div>
+          <div class="input-row">
+            <div class="input-label">Bonus / Additional Income (one-time)<div class="input-note">Spot-tax is computed on this</div></div>
+            <input type="text" class="amt-input" data-input="bonus" value="500000">
+          </div>
+          <div class="input-row">
+            <div class="input-label">Income from Other Sources<div class="input-note">Interest, dividends, FD, etc.</div></div>
+            <input type="text" class="amt-input" data-input="otherSources" value="0">
+          </div>
+          <div class="input-row">
+            <div class="input-label">Income / (Loss) from House Property<div class="input-note">Negative = loss; set-off cap ₹2 L</div></div>
+            <input type="text" class="amt-input" data-input="houseProperty" value="0">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section B: Section 16 -->
+      <div class="section section-deduct">
+        <div class="section-head">
+          <span class="section-letter">B.</span>
+          <span class="section-title">Section 16 — Deductions from Salary</span>
+          <span class="section-sub">Both Regimes</span>
+        </div>
+        <div class="section-body">
+          <div class="input-row">
+            <div class="input-label">Standard Deduction (auto, salaried)<div class="input-note" id="std-ded-note">₹75,000 (New regime)</div></div>
+            <input type="text" class="amt-input auto" id="std-ded-input" readonly value="75000">
+          </div>
+          <div class="input-row">
+            <div class="input-label">Professional Tax<div class="input-note">Max ₹2,500/year (state levy)</div></div>
+            <input type="text" class="amt-input deduct" data-input="pt" value="2500">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section C: Section 11 -->
+      <div class="section section-deduct" id="sec11-block">
+        <div class="section-head">
+          <span class="section-letter">C.</span>
+          <span class="section-title">Section 11 (formerly Section 10) — Exempt Allowances</span>
+          <span class="section-sub">Old Regime Only</span>
+        </div>
+        <div class="section-body">
+          <div class="input-row">
+            <div class="input-label">Leave Travel Allowance (LTA)<div class="input-note">Sec 11(5) — twice in 4-yr block, domestic</div></div>
+            <input type="text" class="amt-input deduct" data-input="lta" value="0">
+          </div>
+          <div class="input-row">
+            <div class="input-label">Telephone Allowance<div class="input-note">Exempt against actual bills</div></div>
+            <input type="text" class="amt-input deduct" data-input="telephone" value="0">
+          </div>
+          <div class="input-row">
+            <div class="input-label">Fuel Reimbursement<div class="input-note">Conveyance / fuel against vouchers</div></div>
+            <input type="text" class="amt-input deduct" data-input="fuel" value="0">
+          </div>
+          <div class="input-row">
+            <div class="input-label">Uniform Allowance<div class="input-note">Sec 11(14) — for office uniform</div></div>
+            <input type="text" class="amt-input deduct" data-input="uniform" value="0">
+          </div>
+          <div class="input-row">
+            <div class="input-label">Learning & Development<div class="input-note">Skill / training reimbursement</div></div>
+            <input type="text" class="amt-input deduct" data-input="lnd" value="0">
+          </div>
+          <div class="input-row">
+            <div class="input-label">Food Allowance / Meal Vouchers<div class="input-note">Max ₹50/meal × 22d × 12m ≈ ₹13,200/yr</div></div>
+            <input type="text" class="amt-input deduct" data-input="food" value="0">
+          </div>
+          <div class="input-row">
+            <div class="input-label">House Rent Paid / Payable directly by you<div class="input-note">HRA exempt portion u/s 11(13A) — enter exempt amount</div></div>
+            <input type="text" class="amt-input deduct" data-input="rent" value="0">
+          </div>
+          <div class="input-row subtotal">
+            <div class="input-label">Section 11 Total (Exemptions Applied)</div>
+            <div class="num-display" data-output="sec11Total">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section D: Chapter VIII -->
+      <div class="section section-deduct" id="chap8-block">
+        <div class="section-head">
+          <span class="section-letter">D.</span>
+          <span class="section-title">Chapter VIII (formerly VI-A) — Deductions from GTI</span>
+          <span class="section-sub">Old Regime Only*</span>
+        </div>
+        <div class="section-body">
+
+          <div class="subsection-head">Donations <span class="sec-num">Sec 133 · 80G</span></div>
+          <div class="input-row">
+            <div class="input-label">Donations (Govt schemes, 100%)<div class="input-note">PMNRF / CM Relief etc.</div></div>
+            <input type="text" class="amt-input deduct" data-input="donations" value="0">
+          </div>
+
+          <div class="subsection-head">Medical &amp; Disability <span class="sec-num">Sec 128 · 129 · 130</span></div>
+          <div class="input-row">
+            <div class="input-label">Disabled Dependent (Sec 128)<div class="input-note">₹75,000 / ₹1,25,000 if severe ≥80%</div></div>
+            <input type="text" class="amt-input deduct" data-input="dd" value="0">
+          </div>
+          <div class="input-row">
+            <div class="input-label">Self-Disability (Sec 130)<div class="input-note">₹75,000 / ₹1,25,000 if severe ≥80%</div></div>
+            <input type="text" class="amt-input deduct" data-input="su" value="0">
+          </div>
+          <div class="input-row">
+            <div class="input-label">Specified Diseases (Sec 129)<div class="input-note">Max ₹40,000 / ₹1,00,000 senior</div></div>
+            <input type="text" class="amt-input deduct" data-input="ddb" value="0">
+          </div>
+
+          <div class="subsection-head">Political &amp; Education <span class="sec-num">Sec 135 · 132</span></div>
+          <div class="input-row">
+            <div class="input-label">Political Party Contribution<div class="input-note">100%, non-cash only</div></div>
+            <input type="text" class="amt-input deduct" data-input="political" value="0">
+          </div>
+          <div class="input-row">
+            <div class="input-label">Education Loan Interest<div class="input-note">Full interest, no cap, 8 yrs</div></div>
+            <input type="text" class="amt-input deduct" data-input="eduLoan" value="0">
+          </div>
+
+          <div class="subsection-head">Health Insurance <span class="sec-num">Sec 126 · 80D</span></div>
+          <div class="input-row">
+            <div class="input-label">Health Insurance Premium<div class="input-note">₹25 K self+fam / +₹50 K senior parents</div></div>
+            <input type="text" class="amt-input deduct" data-input="health" value="0">
+          </div>
+
+          <div class="subsection-head">Section 123 Investments <span class="sec-num">80C / 80CCC · capped ₹1,50,000</span></div>
+          <div class="input-row">
+            <div class="input-label">Provident Fund (EPF)<div class="input-note">Own contribution</div></div>
+            <input type="text" class="amt-input deduct" data-input="pf" value="0">
+          </div>
+          <div class="input-row">
+            <div class="input-label">LIC / NSC / ELSS Mutual Funds<div class="input-note">Combined within ₹1.5 L cap</div></div>
+            <input type="text" class="amt-input deduct" data-input="lic" value="0">
+          </div>
+          <div class="input-row">
+            <div class="input-label">Public Provident Fund (PPF)<div class="input-note">Combined within ₹1.5 L cap</div></div>
+            <input type="text" class="amt-input deduct" data-input="ppf" value="0">
+          </div>
+          <div class="input-row">
+            <div class="input-label">Housing Loan Principal<div class="input-note">Combined within ₹1.5 L cap</div></div>
+            <input type="text" class="amt-input deduct" data-input="housing" value="0">
+          </div>
+          <div class="input-row subtotal">
+            <div class="input-label">Section 123 Subtotal (capped ₹1,50,000)</div>
+            <div class="num-display" data-output="sec123Total">—</div>
+          </div>
+
+          <div class="subsection-head">Section 124 NPS <span class="sec-num">80CCD</span></div>
+          <div class="input-row">
+            <div class="input-label">NPS Self Contribution u/s 124(1B)<div class="input-note">Additional ₹50,000 over Sec 123</div></div>
+            <input type="text" class="amt-input deduct" data-input="npsSelf" value="0">
+          </div>
+          <div class="input-row">
+            <div class="input-label">Employer NPS Contribution u/s 124(2)<div class="input-note">Allowed in BOTH regimes (≤14% / 10%)</div></div>
+            <input type="text" class="amt-input deduct" data-input="npsEmp" value="0">
+          </div>
+          <div class="input-row subtotal">
+            <div class="input-label">Section 124 Subtotal</div>
+            <div class="num-display" data-output="sec124Total">—</div>
+          </div>
+
+          <div class="input-row subtotal" style="border-top:2px solid var(--primary); margin-top:0.5rem;">
+            <div class="input-label">Chapter VIII Total (Applied)</div>
+            <div class="num-display" data-output="chap8Total">—</div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ===== OUTPUT COLUMN ===== -->
+    <div class="calc-column">
+
+      <!-- Headline output -->
+      <div class="section section-output" style="overflow:hidden;">
+        <div class="headline-output">
+          <span class="kicker">Spot TDS on Bonus</span>
+          <div class="spot-amount"><span class="rupee">₹</span><span data-output="spotTds">0</span></div>
+          <div class="spot-meta">
+            <div>
+              <div class="label">Effective Rate on Bonus</div>
+              <div class="value pct" data-output="spotRate">0.00%</div>
+            </div>
+            <div>
+              <div class="label">Bonus Amount</div>
+              <div class="value"><span class="rupee" style="color:rgba(255,255,255,0.5);">₹</span><span data-output="bonusDisplay">5,00,000</span></div>
+            </div>
+            <div>
+              <div class="label">Annual TDS w/o Bonus</div>
+              <div class="value"><span class="rupee" style="color:rgba(255,255,255,0.5);">₹</span><span data-output="tdsWithoutBonus">0</span></div>
+            </div>
+            <div>
+              <div class="label">Annual TDS with Bonus</div>
+              <div class="value"><span class="rupee" style="color:rgba(255,255,255,0.5);">₹</span><span data-output="tdsWithBonus">0</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step-by-step table -->
+      <div class="section">
+        <div class="section-head">
+          <span class="section-letter">F.</span>
+          <span class="section-title">Step-by-Step Computation</span>
+          <span class="section-sub">Spot-tax breakdown</span>
+        </div>
+        <table class="compute-table">
+          <thead>
+            <tr><th>Particulars</th><th>Without Bonus</th><th>With Bonus</th><th>Spot Impact</th></tr>
+          </thead>
+          <tbody id="compute-body"></tbody>
+        </table>
+      </div>
+
+      <!-- Key outputs -->
+      <div class="section section-output">
+        <div class="section-head">
+          <span class="section-letter">G.</span>
+          <span class="section-title">Key Outputs</span>
+          <span class="section-sub">Summary</span>
+        </div>
+        <div class="key-outputs">
+          <div class="ko">
+            <div class="label">Annual TDS Without Bonus</div>
+            <div class="value">₹<span data-output="koAnnualWithout">0</span></div>
+          </div>
+          <div class="ko">
+            <div class="label">Annual TDS With Bonus</div>
+            <div class="value">₹<span data-output="koAnnualWith">0</span></div>
+          </div>
+          <div class="ko">
+            <div class="label">Spot TDS on Bonus</div>
+            <div class="value accent">₹<span data-output="koSpot">0</span></div>
+          </div>
+          <div class="ko">
+            <div class="label">Effective Rate on Bonus</div>
+            <div class="value pct" data-output="koSpotRate">0.00%</div>
+          </div>
+          <div class="ko">
+            <div class="label">Monthly TDS — Base Salary</div>
+            <div class="value">₹<span data-output="koMonthlyWithout">0</span></div>
+          </div>
+          <div class="ko">
+            <div class="label">Monthly TDS — Bonus Spread</div>
+            <div class="value">₹<span data-output="koMonthlyWith">0</span></div>
+          </div>
+          <div class="ko" style="grid-column: 1 / -1;">
+            <div class="label">Total Effective Rate on Full Income (with bonus)</div>
+            <div class="value pct" data-output="koTotalRate">0.00%</div>
+          </div>
+        </div>
+
+        <div style="padding: 0 1.2rem 1.2rem;">
+          <div class="tip-box">
+            <strong>Tip — </strong>
+            When the employer pays the bonus, the spot TDS shown above is typically deducted from the bonus
+            payout itself, in addition to regular monthly TDS. Take-home that month ≈
+            (Bonus − Spot TDS) + (Regular Salary − Monthly TDS).
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============================ SCENARIOS ============================ -->
+<section id="scenarios" class="tab-content">
+  <div style="margin-top:2rem;">
+    <p class="lede" style="max-width:80ch;">
+      Twelve pre-computed scenarios across CTC brackets of <strong>₹20 L</strong>, <strong>₹60 L</strong> and <strong>₹1 Cr</strong>
+      with varying bonus amounts (₹2 L → ₹1 Cr). Std Deduction ₹75,000 applied; surcharge & 87A marginal relief included.
+      Edit the blue cells to model your own scenario.
+    </p>
+  </div>
+
+  <div class="regime-toggle" style="margin-top:1rem; margin-bottom:0; border-bottom:none; padding-bottom:0.5rem;">
+    <span class="label">Regime</span>
+    <div class="toggle-group">
+      <input type="radio" name="scen-regime" id="scen-new" value="new" checked>
+      <label for="scen-new">New</label>
+      <input type="radio" name="scen-regime" id="scen-old" value="old">
+      <label for="scen-old">Old</label>
+    </div>
+  </div>
+
+  <div class="scenario-table-wrap">
+    <table class="scenario-table" id="scenario-table">
+      <thead>
+        <tr>
+          <th>Sl.</th>
+          <th>CTC (₹)</th>
+          <th>Bonus (₹)</th>
+          <th>Taxable Inc.<br>w/o Bonus</th>
+          <th>Annual TDS<br>w/o Bonus</th>
+          <th>Monthly TDS<br>w/o Bonus</th>
+          <th>Taxable Inc.<br>w/ Bonus</th>
+          <th>Annual TDS<br>w/ Bonus</th>
+          <th>Monthly TDS<br>w/ Bonus</th>
+          <th>Spot TDS<br>on Bonus</th>
+          <th>Effective<br>Rate</th>
+          <th>Slab Rate<br>at Margin</th>
+          <th>Surcharge<br>Tier</th>
+        </tr>
+      </thead>
+      <tbody id="scenario-body"></tbody>
+    </table>
+  </div>
+
+  <div class="tip-box" style="margin-top:1.5rem;">
+    <strong>Read this — </strong>
+    Scenario 8 (CTC ₹1 Cr + Bonus ₹5 L) shows an effective bonus rate of about <strong>62%</strong>. This is the
+    <em>surcharge cliff</em> — adding ₹5 L to a ₹99.25 L taxable income crosses ₹1 Cr, which lifts the
+    entire surcharge tier from 10% to 15%, applied to the full tax bill, not just the marginal income.
+    The fix is either (a) accept it, (b) defer the bonus to keep income under ₹1 Cr, or (c) split the
+    bonus across two FYs.
+  </div>
+</section>
+
+<!-- ============================ REFERENCE ============================ -->
+<section id="reference" class="tab-content">
+  <div class="ref-grid">
+
+    <div class="ref-card">
+      <h3>New Regime <span class="sub">— default</span></h3>
+      <table class="ref-table">
+        <thead><tr><th>Income Slab</th><th class="center">Rate</th></tr></thead>
+        <tbody>
+          <tr><td>Up to ₹4,00,000</td><td class="num center new-cell">Nil</td></tr>
+          <tr><td>₹4,00,001 — ₹8,00,000</td><td class="num center new-cell">5%</td></tr>
+          <tr><td>₹8,00,001 — ₹12,00,000</td><td class="num center new-cell">10%</td></tr>
+          <tr><td>₹12,00,001 — ₹16,00,000</td><td class="num center new-cell">15%</td></tr>
+          <tr><td>₹16,00,001 — ₹20,00,000</td><td class="num center new-cell">20%</td></tr>
+          <tr><td>₹20,00,001 — ₹24,00,000</td><td class="num center new-cell">25%</td></tr>
+          <tr><td>Above ₹24,00,000</td><td class="num center new-cell">30%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="ref-card">
+      <h3>Old Regime <span class="sub">— optional</span></h3>
+      <table class="ref-table">
+        <thead><tr><th>Income Slab</th><th class="center">Rate</th></tr></thead>
+        <tbody>
+          <tr><td>Up to ₹2,50,000</td><td class="num center old-cell">Nil</td></tr>
+          <tr><td>₹2,50,001 — ₹5,00,000</td><td class="num center old-cell">5%</td></tr>
+          <tr><td>₹5,00,001 — ₹10,00,000</td><td class="num center old-cell">20%</td></tr>
+          <tr><td>Above ₹10,00,000</td><td class="num center old-cell">30%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="ref-card" style="grid-column: 1 / -1;">
+      <h3>Surcharge <span class="sub">— charged on income-tax, with marginal relief at every tier</span></h3>
+      <table class="ref-table">
+        <thead><tr><th>Total Income Band</th><th class="center">New Regime</th><th class="center">Old Regime</th></tr></thead>
+        <tbody>
+          <tr><td>Up to ₹50 Lakh</td><td class="center na">Nil</td><td class="center na">Nil</td></tr>
+          <tr><td>&gt; ₹50 L and ≤ ₹1 Crore</td><td class="num center new-cell">10%</td><td class="num center old-cell">10%</td></tr>
+          <tr><td>&gt; ₹1 Crore and ≤ ₹2 Crore</td><td class="num center new-cell">15%</td><td class="num center old-cell">15%</td></tr>
+          <tr><td>&gt; ₹2 Crore and ≤ ₹5 Crore</td><td class="num center new-cell">25%</td><td class="num center old-cell">25%</td></tr>
+          <tr><td>&gt; ₹5 Crore</td><td class="num center new-cell">25% (capped)</td><td class="num center old-cell">37%</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:0.8rem; color:var(--ink-light); margin-top:1rem; font-style:italic;">
+        Surcharge on STCG u/s 198 (formerly 111A) and LTCG u/s 199/200 (formerly 112/112A) is capped at 15% under both regimes.
+      </p>
+    </div>
+
+    <div class="ref-card">
+      <h3>Rebate <span class="sub">— Sec 156 (formerly 87A)</span></h3>
+      <div class="kpi-pair">
+        <div class="kpi"><div class="l">New — Eligible up to</div><div class="v">₹12,00,000</div></div>
+        <div class="kpi"><div class="l">New — Max rebate</div><div class="v">₹60,000</div></div>
+        <div class="kpi deduct"><div class="l">Old — Eligible up to</div><div class="v">₹5,00,000</div></div>
+        <div class="kpi deduct"><div class="l">Old — Max rebate</div><div class="v">₹12,500</div></div>
+      </div>
+      <p style="font-size:0.86rem; color:var(--ink-soft); line-height:1.55;">
+        Marginal relief (New): for TI above ₹12 L, tax payable is capped at (TI − ₹12 L). Beyond ~₹12.71 L slab tax wins.
+        Effective tax-free salary for salaried (New): <strong>₹12.75 L</strong> after ₹75 K standard deduction.
+      </p>
+    </div>
+
+    <div class="ref-card">
+      <h3>Cess <span class="sub">— Health &amp; Education</span></h3>
+      <div class="kpi-pair">
+        <div class="kpi"><div class="l">Rate</div><div class="v">4%</div></div>
+        <div class="kpi"><div class="l">Base</div><div class="v" style="font-size:1.05rem;">Tax + Surcharge</div></div>
+      </div>
+      <p style="font-size:0.86rem; color:var(--ink-soft); line-height:1.55;">
+        Applies to both regimes, all income brackets, with no exception.
+      </p>
+    </div>
+
+    <div class="ref-card deduct-card">
+      <h3>Deductions — Regime Comparison <span class="sub">— Income-Tax Act 2025 section numbering</span></h3>
+      <table class="ref-table">
+        <thead><tr><th>Item / Section</th><th class="center" style="width:24%;">New Regime</th><th class="center" style="width:30%;">Old Regime</th></tr></thead>
+        <tbody>
+          <tr><td>Standard Deduction (Salaried)</td><td class="num center new-cell">₹75,000</td><td class="num center old-cell">₹50,000</td></tr>
+          <tr><td>Professional Tax — Sec 16</td><td class="center new-cell">Allowed</td><td class="center old-cell">Allowed</td></tr>
+          <tr><td>Sec 11 (10) — LTA / Tel / Fuel / Uniform / L&amp;D / Food / House Rent</td><td class="center na">Not allowed</td><td class="center old-cell">Allowed (per actuals)</td></tr>
+          <tr><td>Sec 11(13A) — HRA Exemption</td><td class="center na">Not allowed</td><td class="center old-cell">Lower of 3 limits</td></tr>
+          <tr><td>Sec 123 (80C) — PF, LIC, PPF, NSC, Housing Principal</td><td class="center na">Not allowed</td><td class="num center old-cell">≤ ₹1,50,000</td></tr>
+          <tr><td>Sec 124 (80CCD(1B)) — NPS Self</td><td class="center na">Not allowed</td><td class="num center old-cell">+ ₹50,000</td></tr>
+          <tr><td>Sec 124 (80CCD(2)) — Employer NPS</td><td class="center new-cell">≤ 14% of salary</td><td class="center old-cell">≤ 10% of salary</td></tr>
+          <tr><td>Sec 126 (80D) — Health Insurance</td><td class="center na">Not allowed</td><td class="center old-cell">₹25 K + ₹50 K (senior)</td></tr>
+          <tr><td>Sec 128 (80DD) — Disabled Dependent</td><td class="center na">Not allowed</td><td class="num center old-cell">₹75 K / ₹1.25 L</td></tr>
+          <tr><td>Sec 129 (80DDB) — Specified Diseases</td><td class="center na">Not allowed</td><td class="num center old-cell">₹40 K / ₹1 L (senior)</td></tr>
+          <tr><td>Sec 130 (80U) — Self-Disability</td><td class="center na">Not allowed</td><td class="num center old-cell">₹75 K / ₹1.25 L</td></tr>
+          <tr><td>Sec 132 (80E) — Education Loan Interest</td><td class="center na">Not allowed</td><td class="center old-cell">Full (8 yrs)</td></tr>
+          <tr><td>Sec 133 (80G) — Donations</td><td class="center na">Not allowed</td><td class="center old-cell">50% / 100% by type</td></tr>
+          <tr><td>Sec 135 (80GGC) — Political Party</td><td class="center na">Not allowed</td><td class="center old-cell">100% (non-cash)</td></tr>
+          <tr><td>Sec 24(b) — Self-occupied home loan interest</td><td class="center na">Not allowed</td><td class="num center old-cell">≤ ₹2,00,000</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="disclaimer">
+    <strong>A note on use.</strong> This calculator is a planning aid built per the Income-Tax Act 2025 and Finance Act 2025
+    slab rates for FY 2025-26. It assumes a resident individual under 60 with regular salary income only. It does not
+    model capital-gains special-rate income (Sec 198, 199, 200), agricultural income, lottery winnings, or multiple-employer
+    scenarios. For high-value transactions or complex deductions, verify the output with a qualified chartered accountant.
+  </div>
+</footer>
+
+<script>
+/* ===================================================================
+   TAX ENGINE
+   =================================================================== */
+
+const TAX_AT_50L_NEW = 1080000;
+const TAX_AT_1CR_NEW = 2580000 * 1.10;
+const TAX_AT_2CR_NEW = 5580000 * 1.15;
+const TAX_AT_50L_OLD = 1312500;
+const TAX_AT_1CR_OLD = 2812500 * 1.10;
+const TAX_AT_2CR_OLD = 7012500 * 1.15;
+const TAX_AT_5CR_OLD = 16012500 * 1.25;
+
+function slabTaxNew(ti) {
+  return Math.max(0, Math.min(ti, 400000)) * 0
+       + Math.max(0, Math.min(ti, 800000) - 400000) * 0.05
+       + Math.max(0, Math.min(ti, 1200000) - 800000) * 0.10
+       + Math.max(0, Math.min(ti, 1600000) - 1200000) * 0.15
+       + Math.max(0, Math.min(ti, 2000000) - 1600000) * 0.20
+       + Math.max(0, Math.min(ti, 2400000) - 2000000) * 0.25
+       + Math.max(0, ti - 2400000) * 0.30;
+}
+
+function slabTaxOld(ti) {
+  return Math.max(0, Math.min(ti, 250000)) * 0
+       + Math.max(0, Math.min(ti, 500000) - 250000) * 0.05
+       + Math.max(0, Math.min(ti, 1000000) - 500000) * 0.20
+       + Math.max(0, ti - 1000000) * 0.30;
+}
+
+function taxAfterRebate(ti, slabTax, regime) {
+  if (regime === 'new') {
+    if (ti <= 1200000) return 0;
+    return Math.min(slabTax, Math.max(0, ti - 1200000));
+  } else {
+    if (ti <= 500000) return Math.max(0, slabTax - 12500);
+    return slabTax;
+  }
+}
+
+function surcharge(ti, tax, regime) {
+  if (ti <= 5000000) return 0;
+  let rate, threshold, thresholdTax;
+  if (regime === 'new') {
+    if (ti <= 10000000)      { rate=0.10; threshold=5000000;  thresholdTax=TAX_AT_50L_NEW; }
+    else if (ti <= 20000000) { rate=0.15; threshold=10000000; thresholdTax=TAX_AT_1CR_NEW; }
+    else                     { rate=0.25; threshold=20000000; thresholdTax=TAX_AT_2CR_NEW; }
+  } else {
+    if (ti <= 10000000)      { rate=0.10; threshold=5000000;  thresholdTax=TAX_AT_50L_OLD; }
+    else if (ti <= 20000000) { rate=0.15; threshold=10000000; thresholdTax=TAX_AT_1CR_OLD; }
+    else if (ti <= 50000000) { rate=0.25; threshold=20000000; thresholdTax=TAX_AT_2CR_OLD; }
+    else                     { rate=0.37; threshold=50000000; thresholdTax=TAX_AT_5CR_OLD; }
+  }
+  const raw = tax * rate;
+  const cap = thresholdTax + (ti - threshold) - tax;
+  return Math.max(0, Math.min(raw, cap));
+}
+
+function computeTax(ti, regime) {
+  const slab = regime === 'new' ? slabTaxNew(ti) : slabTaxOld(ti);
+  const tar  = taxAfterRebate(ti, slab, regime);
+  const sur  = surcharge(ti, tar, regime);
+  const cess = (tar + sur) * 0.04;
+  return { slab, tar, sur, cess, total: tar + sur + cess, rebate: slab - tar };
+}
+
+/* ===================================================================
+   FORMATTERS
+   =================================================================== */
+
+function fmt(n, opts = {}) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  if (Math.abs(n) < 1) return opts.allowZero ? '0' : '—';
+  const sign = n < 0 ? '−' : '';
+  const abs = Math.abs(Math.round(n));
+  return sign + abs.toLocaleString('en-IN');
+}
+
+function fmtCell(n) {
+  if (n === null || n === undefined || isNaN(n) || Math.abs(n) < 0.5) return '—';
+  const sign = n < 0 ? '−' : '';
+  const abs = Math.abs(Math.round(n));
+  return sign + '₹' + abs.toLocaleString('en-IN');
+}
+
+function fmtPct(n) {
+  if (!isFinite(n) || Math.abs(n) < 0.0001) return '—';
+  return (n * 100).toFixed(2) + '%';
+}
+
+function readNum(selectorOrEl) {
+  const el = typeof selectorOrEl === 'string' ? document.querySelector(selectorOrEl) : selectorOrEl;
+  if (!el) return 0;
+  const v = String(el.value || '').replace(/[^0-9.\-]/g, '');
+  const n = parseFloat(v);
+  return isNaN(n) ? 0 : n;
+}
+
+/* ===================================================================
+   CALCULATOR — INPUTS, RECALCULATE, RENDER
+   =================================================================== */
+
+const SEC11_KEYS = ['lta','telephone','fuel','uniform','lnd','food','rent'];
+const SEC123_KEYS = ['pf','lic','ppf','housing'];
+const ALL_DEDUCT_KEYS = [
+  'pt','lta','telephone','fuel','uniform','lnd','food','rent',
+  'donations','dd','su','ddb','political','eduLoan','health',
+  'pf','lic','ppf','housing','npsSelf','npsEmp'
+];
+
+function readAllInputs() {
+  const o = {};
+  document.querySelectorAll('[data-input]').forEach(el => {
+    o[el.dataset.input] = readNum(el);
+  });
+  return o;
+}
+
+function recalculate() {
+  const regime = document.querySelector('input[name="regime"]:checked').value;
+  const i = readAllInputs();
+
+  // Standard deduction
+  const stdDed = regime === 'new' ? 75000 : 50000;
+  document.getElementById('std-ded-input').value = stdDed;
+  document.getElementById('std-ded-note').textContent =
+    regime === 'new' ? '₹75,000 (New regime)' : '₹50,000 (Old regime)';
+  document.getElementById('regime-badge').textContent =
+    'FY 2025-26 · ' + (regime === 'new' ? 'NEW REGIME' : 'OLD REGIME');
+
+  // Apply disabled styling to inputs based on regime
+  document.querySelectorAll('.amt-input.deduct').forEach(el => {
+    const key = el.dataset.input;
+    let disabled = false;
+    if (regime === 'new') {
+      // In new regime, ALL Sec 11 + Chapter VIII deductions disabled
+      // EXCEPT: pt (Sec 16), npsEmp (Sec 124(2))
+      disabled = !['pt','npsEmp'].includes(key);
+    }
+    el.classList.toggle('disabled-regime', disabled);
+    el.closest('.input-row').classList.toggle('disabled-row', disabled);
+  });
+
+  // Compute deduction buckets
+  let sec11 = 0;
+  if (regime === 'old') {
+    sec11 = (i.lta||0) + (i.telephone||0) + (i.fuel||0) + (i.uniform||0)
+          + (i.lnd||0) + Math.min(i.food||0, 13200) + (i.rent||0);
+  }
+  const sec16 = stdDed + (i.pt||0);
+
+  let sec123 = 0;
+  if (regime === 'old') {
+    sec123 = Math.min((i.pf||0) + (i.lic||0) + (i.ppf||0) + (i.housing||0), 150000);
+  }
+  let sec124 = 0;
+  if (regime === 'old') {
+    sec124 = Math.min(i.npsSelf||0, 50000) + (i.npsEmp||0);
+  } else {
+    sec124 = (i.npsEmp||0); // only employer in new regime
+  }
+  let chap8 = sec124;
+  if (regime === 'old') {
+    chap8 = sec123 + sec124
+          + (i.health||0)
+          + (i.dd||0) + (i.su||0) + (i.ddb||0)
+          + (i.eduLoan||0) + (i.donations||0) + (i.political||0);
+  }
+
+  // Render subtotals
+  document.querySelector('[data-output="sec11Total"]').textContent  = '₹' + fmt(sec11);
+  document.querySelector('[data-output="sec123Total"]').textContent = '₹' + fmt(sec123);
+  document.querySelector('[data-output="sec124Total"]').textContent = '₹' + fmt(sec124);
+  document.querySelector('[data-output="chap8Total"]').textContent  = '₹' + fmt(chap8);
+
+  // Step-by-step computation
+  function pipeline(includeBonus) {
+    const bonus = includeBonus ? (i.bonus||0) : 0;
+    const gross = (i.ctc||0) + bonus;
+    const afterSec11 = gross - sec11;
+    const netSal = afterSec11 - sec16;
+    const gti = netSal + (i.otherSources||0) + (i.houseProperty||0);
+    const ti = Math.max(0, gti - chap8);
+    const t = computeTax(ti, regime);
+    return { gross, sec11, afterSec11, sec16, netSal, otherSources: i.otherSources||0,
+             houseProperty: i.houseProperty||0, gti, chap8, ti, ...t };
+  }
+
+  const wo = pipeline(false);
+  const wn = pipeline(true);
+  const spotTds = wn.total - wo.total;
+  const effectiveRate = (i.bonus||0) > 0 ? spotTds / i.bonus : 0;
+
+  // Compute table rows
+  const rows = [
+    { label: 'Gross Salary (CTC + Bonus)',                     wo: wo.gross,         w: wn.gross,         strong: true },
+    { label: '    Less : Section 11 exemptions',                wo: wo.sec11,         w: wn.sec11,         indent: true },
+    { label: 'Salary after Sec 11 exemptions',                  wo: wo.afterSec11,    w: wn.afterSec11 },
+    { label: '    Less : Section 16 deductions (Std + PT)',     wo: wo.sec16,         w: wn.sec16,         indent: true },
+    { label: 'Net Salary Income',                               wo: wo.netSal,        w: wn.netSal,        strong: true },
+    { label: '    Add : Income from Other Sources',             wo: wo.otherSources,  w: wn.otherSources,  indent: true },
+    { label: '    Add/Less : Income from House Property',       wo: wo.houseProperty, w: wn.houseProperty, indent: true },
+    { label: 'Gross Total Income',                              wo: wo.gti,           w: wn.gti,           strong: true },
+    { label: '    Less : Chapter VIII deductions',              wo: wo.chap8,         w: wn.chap8,         indent: true },
+    { label: 'Taxable Income',                                  wo: wo.ti,            w: wn.ti,            strong: true },
+    { label: 'Slab Tax',                                        wo: wo.slab,          w: wn.slab },
+    { label: '    Less : Rebate u/s 156 (87A)',                  wo: wo.rebate,        w: wn.rebate,        indent: true },
+    { label: 'Tax after Rebate',                                wo: wo.tar,           w: wn.tar },
+    { label: '    Add : Surcharge (with marginal relief)',      wo: wo.sur,           w: wn.sur,           indent: true },
+    { label: '    Add : Health & Education Cess @ 4%',          wo: wo.cess,          w: wn.cess,          indent: true },
+    { label: 'TOTAL ANNUAL TDS',                                wo: wo.total,         w: wn.total,         total: true },
+  ];
+
+  const body = document.getElementById('compute-body');
+  body.innerHTML = rows.map(r => {
+    const cls = r.total ? 'total-row' : (r.strong ? 'strong-row' : '');
+    const lblCls = r.indent ? 'indent' : '';
+    const spotVal = r.w - r.wo;
+    return `<tr class="${cls}">
+      <td class="${lblCls}">${r.label.trim()}</td>
+      <td>${fmtCell(r.wo)}</td>
+      <td>${fmtCell(r.w)}</td>
+      <td class="spot-col">${fmtCell(spotVal)}</td>
+    </tr>`;
+  }).join('');
+
+  // Headline output
+  document.querySelector('[data-output="spotTds"]').textContent = fmt(spotTds);
+  document.querySelector('[data-output="spotRate"]').textContent = fmtPct(effectiveRate);
+  document.querySelector('[data-output="bonusDisplay"]').textContent = fmt(i.bonus||0);
+  document.querySelector('[data-output="tdsWithoutBonus"]').textContent = fmt(wo.total);
+  document.querySelector('[data-output="tdsWithBonus"]').textContent = fmt(wn.total);
+
+  // Key outputs
+  document.querySelector('[data-output="koAnnualWithout"]').textContent = fmt(wo.total);
+  document.querySelector('[data-output="koAnnualWith"]').textContent = fmt(wn.total);
+  document.querySelector('[data-output="koSpot"]').textContent = fmt(spotTds);
+  document.querySelector('[data-output="koSpotRate"]').textContent = fmtPct(effectiveRate);
+  document.querySelector('[data-output="koMonthlyWithout"]').textContent = fmt(wo.total / 12);
+  document.querySelector('[data-output="koMonthlyWith"]').textContent = fmt(wn.total / 12);
+  const totalIncome = (i.ctc||0) + (i.bonus||0);
+  document.querySelector('[data-output="koTotalRate"]').textContent = fmtPct(totalIncome > 0 ? wn.total/totalIncome : 0);
+}
+
+/* ===================================================================
+   SCENARIO TABLE
+   =================================================================== */
+
+const SCENARIOS = [
+  [2000000,  200000],[2000000,  500000],[2000000, 1000000],
+  [6000000,  200000],[6000000,  500000],[6000000, 1000000],[6000000, 2500000],
+  [10000000,  500000],[10000000, 1000000],[10000000, 2500000],[10000000, 5000000],
+  [10000000, 10000000],
+];
+
+function marginalSlab(ti, regime) {
+  if (regime === 'new') {
+    if (ti <= 400000)  return '0%';
+    if (ti <= 800000)  return '5%';
+    if (ti <= 1200000) return '10%';
+    if (ti <= 1600000) return '15%';
+    if (ti <= 2000000) return '20%';
+    if (ti <= 2400000) return '25%';
+    return '30%';
+  } else {
+    if (ti <= 250000)   return '0%';
+    if (ti <= 500000)   return '5%';
+    if (ti <= 1000000)  return '20%';
+    return '30%';
+  }
+}
+
+function surchargeTier(ti) {
+  if (ti <= 5000000)  return 'Nil';
+  if (ti <= 10000000) return '10%';
+  if (ti <= 20000000) return '15%';
+  return '25%';
+}
+
+function buildScenarioTable() {
+  const regime = document.querySelector('input[name="scen-regime"]:checked').value;
+  const stdDed = regime === 'new' ? 75000 : 50000;
+  const body = document.getElementById('scenario-body');
+
+  body.innerHTML = SCENARIOS.map((sc, idx) => {
+    return `<tr data-idx="${idx}">
+      <td>${idx + 1}</td>
+      <td class="input-cell"><input class="cell-input" type="text" data-field="ctc" data-idx="${idx}" value="${sc[0].toLocaleString('en-IN')}"></td>
+      <td class="input-cell"><input class="cell-input" type="text" data-field="bonus" data-idx="${idx}" value="${sc[1].toLocaleString('en-IN')}"></td>
+      <td data-col="tiWo">—</td>
+      <td data-col="tdsWo">—</td>
+      <td data-col="monthlyWo">—</td>
+      <td data-col="tiW">—</td>
+      <td data-col="tdsW">—</td>
+      <td data-col="monthlyW">—</td>
+      <td class="spot-cell" data-col="spot">—</td>
+      <td class="rate-cell" data-col="rate">—</td>
+      <td class="tier-cell" data-col="slab">—</td>
+      <td class="tier-cell" data-col="tier">—</td>
+    </tr>`;
+  }).join('');
+
+  // Add event listeners on the editable cells
+  body.querySelectorAll('input.cell-input').forEach(el => {
+    el.addEventListener('input', () => {
+      const idx = parseInt(el.dataset.idx);
+      const field = el.dataset.field;
+      const val = parseFloat(String(el.value).replace(/[^0-9.\-]/g, '')) || 0;
+      SCENARIOS[idx][field === 'ctc' ? 0 : 1] = val;
+      computeScenarios();
+    });
+    el.addEventListener('blur', () => {
+      const idx = parseInt(el.dataset.idx);
+      const field = el.dataset.field;
+      el.value = SCENARIOS[idx][field === 'ctc' ? 0 : 1].toLocaleString('en-IN');
+    });
+  });
+
+  computeScenarios();
+}
+
+function computeScenarios() {
+  const regime = document.querySelector('input[name="scen-regime"]:checked').value;
+  const stdDed = regime === 'new' ? 75000 : 50000;
+  const body = document.getElementById('scenario-body');
+
+  SCENARIOS.forEach((sc, idx) => {
+    const [ctc, bonus] = sc;
+    const tiWo = Math.max(0, ctc - stdDed);
+    const tiW  = Math.max(0, ctc + bonus - stdDed);
+    const tWo = computeTax(tiWo, regime);
+    const tW  = computeTax(tiW,  regime);
+    const spot = tW.total - tWo.total;
+    const rate = bonus > 0 ? spot / bonus : 0;
+    const row = body.querySelector(`tr[data-idx="${idx}"]`);
+    row.querySelector('[data-col="tiWo"]').textContent     = fmtCell(tiWo);
+    row.querySelector('[data-col="tdsWo"]').textContent    = fmtCell(tWo.total);
+    row.querySelector('[data-col="monthlyWo"]').textContent= fmtCell(tWo.total / 12);
+    row.querySelector('[data-col="tiW"]').textContent      = fmtCell(tiW);
+    row.querySelector('[data-col="tdsW"]').textContent     = fmtCell(tW.total);
+    row.querySelector('[data-col="monthlyW"]').textContent = fmtCell(tW.total / 12);
+    row.querySelector('[data-col="spot"]').textContent     = fmtCell(spot);
+    row.querySelector('[data-col="rate"]').textContent     = fmtPct(rate);
+    row.querySelector('[data-col="slab"]').textContent     = marginalSlab(tiW, regime);
+    row.querySelector('[data-col="tier"]').textContent     = surchargeTier(tiW);
+  });
+}
+
+/* ===================================================================
+   INIT — wire up tabs, inputs, formatting
+   =================================================================== */
+
+// Tab switching
+document.querySelectorAll('nav.tabs button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = btn.dataset.tab;
+    document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('active', b === btn));
+    document.querySelectorAll('.tab-content').forEach(sec => sec.classList.toggle('active', sec.id === target));
+    if (target === 'scenarios') computeScenarios();
+  });
+});
+
+// Input change → recalc
+document.querySelectorAll('[data-input]').forEach(el => {
+  el.addEventListener('input', recalculate);
+  el.addEventListener('blur', () => {
+    const n = readNum(el);
+    el.value = n.toLocaleString('en-IN');
+  });
+  // On focus, strip the commas so user can edit raw value
+  el.addEventListener('focus', () => {
+    const n = readNum(el);
+    el.value = String(n || '');
+    el.select();
+  });
+});
+
+// Format initial input values
+document.querySelectorAll('.amt-input[data-input]').forEach(el => {
+  const n = readNum(el);
+  el.value = n.toLocaleString('en-IN');
+});
+document.getElementById('std-ded-input').value = (75000).toLocaleString('en-IN');
+
+// Regime toggle → recalc
+document.querySelectorAll('input[name="regime"]').forEach(r => r.addEventListener('change', recalculate));
+document.querySelectorAll('input[name="scen-regime"]').forEach(r => r.addEventListener('change', computeScenarios));
+
+// Initial render
+recalculate();
+buildScenarioTable();
+</script>
+
+</body>
+</html>
